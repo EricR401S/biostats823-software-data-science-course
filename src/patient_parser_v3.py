@@ -18,6 +18,7 @@ These quantities of N, M, K, and L have an unknown lengths,
 so they will be expected to scale with size.
 A file may have 500 rows and 5 columns or 5 million rows and 50 columns.
 For this reason, no assumptions will be made about the size of the files.
+These details will be considered in the time complexity analysis.
 """
 
 
@@ -57,6 +58,7 @@ def fix_header(header: str) -> list[str]:
     depends on the amount of columns in those files,
     the time complexity will scale linearly.
 
+    First, the header is stripped of any whitespace, O(1).
     As for the header's contents, they are being separated
     by using the split() method. A list with the strings is
     returned. This method has a time complexity of O(M) or O(L).
@@ -69,6 +71,7 @@ def fix_header(header: str) -> list[str]:
 
     The overall category of time complexity is O(M) or O(L).
     """
+    header = header.strip()  # O(1)
     return header.split("\t")  # O(M) or O(L)
 
 
@@ -130,19 +133,19 @@ def patient_file_to_dict(
     """
     output_dict: dict[str, dict[str, str]] = dict()  # O(1)
 
-    with open(txt_file) as f:  # O(1)
+    with open(txt_file, encoding="UTF-8-SIG") as f:  # O(1)
         # Core assumption: first line is header
         # skip and save header
         header = next(f)  # O(1)
         fixed_header = fix_header(header)  # O(M)
-        patient_id_index = header.index("\ufeffPatientID")  # O(M)
+        patient_id_index = header.index("PatientID")  # O(M)
 
         # remove patient_id from header
         fixed_header.pop(patient_id_index)  # O(1)
 
         # This whole loop has a time complexity of O(NxM)
         for line in f:  # O(N x M)
-            records = line.split("\t")  # O(M)
+            records = line.strip().split("\t")  # O(M)
             patient_id = records.pop(patient_id_index)  # O(1)
 
             output_dict[patient_id] = dict(zip(fixed_header, records))  # O(M)
@@ -221,19 +224,19 @@ def lab_file_to_dict(
     """
     output_dict: dict[str, list[dict[str, str]]] = dict()  # O(1)
 
-    with open(txt_file) as f:  # O(1)
+    with open(txt_file, encoding="UTF-8-SIG") as f:  # O(1)
         # Core assumption: first line is header
         # skip and save header
         header = next(f)  # O(1)
         fixed_header = fix_header(header)  # O(L)
-        patient_id_index = fixed_header.index("\ufeffPatientID")  # O(L)
+        patient_id_index = fixed_header.index("PatientID")  # O(L)
 
         # remove patient_id from header
         fixed_header.pop(patient_id_index)  # O(1)
 
         # This whole loop has a time complexity of O(K x L)
         for line in f:  # O(K x L)
-            labs = line.split("\t")  # O(L)
+            labs = line.strip().split("\t")  # O(L)
             patient_id = labs.pop(patient_id_index)  # O(1)
 
             if patient_id not in output_dict:  # O(1)
@@ -389,10 +392,10 @@ def patient_is_sick(  # type: ignore[return]
         if (lab["LabName"] == lab_name) and (is_lab_found is False):  # O(1)
             is_lab_found = True  # O(1)
             lab_value = float(lab["LabValue"])  # O(1)
-            lab_date = date_parser(lab["LabDateTime\n"])  # O(1)
+            lab_date = date_parser(lab["LabDateTime"])  # O(1)
 
         elif (lab["LabName"] == lab_name) and (is_lab_found is True):  # O(1)
-            new_lab_date = date_parser(lab["LabDateTime\n"])  # O(1)
+            new_lab_date = date_parser(lab["LabDateTime"])  # O(1)
             if new_lab_date > lab_date:  # O(1)
                 lab_value = float(lab["LabValue"])  # O(1)
                 lab_date = new_lab_date  # O(1)

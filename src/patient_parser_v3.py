@@ -384,7 +384,8 @@ def patient_is_sick(  # type: ignore[return]
 
     is_lab_found = False  # O(1)
     # arbitrary value to please mypy
-    lab_value = -999999999999999.0  # O(1)
+
+    lab_value = 0.0  # O(1)
     # arbitrary date to please mypy
     lab_date = dt.datetime(1, 1, 1)  # O(1)
 
@@ -410,3 +411,55 @@ def patient_is_sick(  # type: ignore[return]
 
     elif operator == "<":  # O(1)
         return lab_value < value  # O(1)
+
+
+def age_at_first_admission(
+    patient_records: dict[str, dict[str, str]],
+    lab_records: dict[str, list[dict[str, str]]],
+    patient_id: str,
+) -> int:
+    """Return the age of a patient at their first admission.
+
+    The function uses the patient records and lab records to
+    determine the age of a patient at their first admission.
+    Firstly, the patient's date of birth is accessed, O(2)
+    and parsed, O(1).
+
+    The patient's lab records are then saved, O(1).
+
+    An arbitrary admission date is then initialized, O(1).
+
+    A loop initiates to iterate through the patient's lab records.
+    This is O(K) (rows in the lab file). Within this loop, the
+    admission date is accessed and parsed, O(2).
+    Then a check occurs to see if the admission date is older
+    than the earliest admission date. This is O(1).
+    If the admission date is older, the earliest admission date
+    is updated, O(1). If the admission date is not older,
+    the loop continues after it hits the else statement O(1).
+
+    After exiting the loop, the age of the patient at their
+    first admission is calculated, O(1). This is then
+    returned, O(1).
+
+    We have a total time complexity of
+    O(2) + O(1) + O(1) + O(K x 5) = O(K x 5) + O(4).
+    This simplifies to O(K), as expected.
+    """
+    dob = patient_records[patient_id]["PatientDateOfBirth"]  # O(2)
+    dob_formatted = date_parser(dob)  # O(1)
+
+    patient_lab_records = lab_records[patient_id]  # O(1)
+
+    # today or now is initialized as
+    # the earliest possible admission date
+    earliest_admission = dt.datetime.now()  # O(1)
+
+    for lab in patient_lab_records:  # O(K)
+        admission_date = date_parser(lab["LabDateTime"])  # O(2)
+        if admission_date < earliest_admission:  # O(1)
+            earliest_admission = admission_date  # O(1)
+
+    first_admission_age = earliest_admission.year - dob_formatted.year  # O(1)
+
+    return first_admission_age  # O(1)

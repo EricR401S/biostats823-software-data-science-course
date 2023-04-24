@@ -1,44 +1,40 @@
 """Test patient_age."""
 import pytest
 
-from patient_parser_v3 import patient_age
-
-# from patient_parser_v3 import patient_age
+from patient_parser_v3 import Patient, Labs
 import datetime as dt
 
 
 def test_patient_age() -> None:
     """Test patient_age."""
     # Building the patient dictionary for the test
-    patient_dict = {
-        "Luis": {
-            "PatientGender": "Male",
-            "PatientDateOfBirth": "1943-02-07 10:04:20.717",
-            "PatientRace": "Hispanic",
-            "PatientMaritalStatus": "Divorced",
-            "PatientLanguage": "Spanish",
-            "PatientPopulationPercentageBelowPoverty": "6.67",
-        },
-        "Josephine": {
-            "PatientGender": "Male",
-            "PatientDateOfBirth": "1959-01-04 05:45:29.580",
-            "PatientRace": "Hispanic",
-            "PatientMaritalStatus": "Married",
-            "PatientLanguage": "Spanish",
-            "PatientPopulationPercentageBelowPoverty": "16.09",
-        },
-    }
+    Luis = Patient(
+        "1",
+        "Male",
+        dt.datetime(1947, 12, 28, 2, 45, 40, 547000),
+        "White",
+        "Married",
+        "Spanish",
+        "0.1",
+        patient_labs=[
+            Labs(
+                "1",
+                "1",
+                "METABOLIC: ALBUMIN",
+                3.1,
+                "gm/dL",
+                dt.datetime(1992, 7, 1, 8, 10, 42, 320000),
+            ),
+            Labs(
+                "1",
+                "3",
+                "METABOLIC: ALBUMIN",
+                3.9,
+                "gm/dL",
+                dt.datetime(2011, 12, 19, 2, 49, 23, 900000),
+            ),
+        ],
+    )
 
     # testing the patient_age function
-    assert patient_age(patient_dict, "Luis") == 80
-    assert patient_age(patient_dict, "Josephine") == 64
-
-    # If more patients were added to the
-    # test patient dict, this assert loop
-    # would test the patient age function for all of them
-    for patient in patient_dict:
-        birth_year = int(patient_dict[patient]["PatientDateOfBirth"][:4])
-        assert (
-            patient_age(patient_dict, patient)
-            == dt.datetime.now().year - birth_year
-        )
+    assert Luis.age == 76

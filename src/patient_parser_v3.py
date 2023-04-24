@@ -22,6 +22,209 @@ These details will be considered in the time complexity analysis.
 """
 
 
+class Labs:
+    """Class to represent lab results."""
+
+    def __init__(
+        self,
+        patient_id: str = "",
+        admission_id: str = "",
+        lab_name: str = "",
+        lab_value: float = 0.0,
+        lab_unit: str = "",
+        lab_date: dt.datetime = dt.datetime(1, 1, 1),
+    ) -> None:
+        """Initialize lab object."""
+        self.patient_id: str = patient_id
+        self.admission_id: str = admission_id
+        self.name: str = lab_name
+        self.value: float = lab_value
+        self.unit: str = lab_unit
+        self.date: dt.datetime = lab_date
+
+
+class Patient:
+    """Patient class to store patient information."""
+
+    def __init__(
+        self,
+        patient_id: str = "",
+        patient_gender: str = "",
+        patient_dob: dt.datetime = dt.datetime.now(),
+        patient_race: str = "",
+        patient_marital_status: str = "",
+        patient_language: str = "",
+        patient_poverty_level: str = "",
+        patient_labs: list[Labs] = [],
+    ) -> None:
+        """Initialize patient object."""
+        self.patient_id: str = patient_id
+        self.gender: str = patient_gender
+        self.dob: dt.datetime = patient_dob
+        self.race: str = patient_race
+        self.marital_status: str = patient_marital_status
+        self.language: str = patient_language
+        self.poverty_level: str = patient_poverty_level
+        self.labs: list[Labs] = patient_labs
+
+    @property
+    def age(self) -> int:
+        """Return patient's age."""
+        return dt.datetime.now().year - self.dob.year
+
+    def is_sick(  # type: ignore[return]
+        self,
+        lab_name: str,
+        operator: str,
+        value: float,
+    ) -> bool:
+        """Return boolean based on threshold for test.
+
+        This is a function that determines if the patient is sick,
+        depending on the threshold values chosen for the patient,
+        for a specific lab test.
+        The lab records are a dictionary with a patient key mapped
+        to a list of dictionaries that represent lab tests.
+        The operators to compare against the thresholds are '>' and '<'.
+
+        The first step is to save the patient's lab records to a variable.
+        This is O(1). Three variables are initialized. The first is a flag
+        variable that is set to False, and it is meant to indicate if a
+        specific lab test exists for a patient. If False, that test does
+        not exist, and the function will return an error message (later on
+        in the function). The second variable is meant to hold a lab value,
+        and the last one will hold a lab date. For simplicity, the latter
+        two will be initialized to None and will be updated if the lab test
+        is found. This is O(1) + O(1) + O(1).
+
+        We have a complexity of O(1) + O(1) + O(1) + O(1) = O(1) up
+        to this point.
+
+        The next step is to iterate through the patient's lab records in order
+        to find the lab test that matches the lab_name. This is O(K).
+        Although K referred to the number of rows (tests) in the lab file,
+        it is also used to represent the number of lab tests for
+        a patient in this unique case. Part of the nuance of K is that we don't
+        know how many lab tests there are  in total, in addition to lab tests
+        per patient. We can have 10, 20, 30, 40 or maybe hundreds of labs
+        for a given patient.
+
+        Within this loop, two checks occur. The first ascertains that the lab
+        name has been found and that the flag is set to False. This is O(1).
+        This is equivalent to finding that lab file for the first time.
+        The flag is updated to True, the lab value is found and converted
+        to a float and used to update the lab_value variable. The lab date
+        is parsed and is used to update the lab_date variable.
+        This is O(1) + O(1) + O(1). This sums to O(1).
+
+        The second check assumes a new lab test has been found again, given
+        that the flag is currently set to True. This check is O(1).
+        The accessing and parsing of the new date is O(1).
+        The comparison of the new date to the old date is O(1).
+        If the new date is more recent, the lab value and date are updated
+        in an identical fashion. The updating of the lab value is O(1).
+        The updating of the lab date is O(1). This sums to
+        O(1) + O(1) + O(1) + O(1) + O(1) = O(1).
+
+        These checks all occur within the loop, so the time complexity
+        is O(K) + O(K) = 2 * O(K).
+
+        The function then proceeds to validate if no test was found.
+        this check is O(1). The function then returns an error message
+        if the test was not found. This is O(1).
+
+        The next checks are to verify which operators are being used.
+        One full check is performed for each of the two, < and >, and
+        a boolean is returned for each by comparing the lab value found
+        to the threshold value by using the designated operator.
+        The checking is O(1), and the comparison is O(1),
+        and the return is O(1).
+
+        Now, to calculate the final tally.
+        The initialization of the variables is O(1).
+        The loop is 2*O(K).
+        The checks for the potential lab not found is O(1).
+        The checks for the operators, as well as their comparisons and
+        return statements are 2 * O(1) = O(1).
+
+        This simplifies to an overall time complexity of O(K).
+        """
+        lab_records = self.labs  # O(1)
+
+        is_lab_found = False  # O(1)
+        # arbitrary value to please mypy
+
+        lab_value = 0.0  # O(1)
+        # arbitrary date to please mypy
+        lab_date = dt.datetime(1, 1, 1)  # O(1)
+
+        for lab in lab_records:  # O(K)
+            if (lab.name == lab_name) and (is_lab_found is False):  # O(1)
+                is_lab_found = True  # O(1)
+                lab_value = lab.value  # O(1)
+                lab_date = lab.date  # O(1)
+
+            elif (lab.name == lab_name) and (is_lab_found is True):  # O(1)
+                new_lab_date = lab.date  # O(1)
+                if new_lab_date > lab_date:  # O(1)
+                    lab_value = lab.value  # O(1)
+                    lab_date = lab.date  # O(1)
+
+        if not is_lab_found:  # O(1)
+            raise ValueError(
+                "Lab not found. It may not exist, or you may have mistyped it"
+            )  # O(1)
+
+        elif operator == ">":  # O(1)
+            return lab_value > value  # O(1)
+
+        elif operator == "<":  # O(1)
+            return lab_value < value  # O(1)
+
+    @property
+    def age_at_first_admission(self) -> int:
+        """Return the age of the patient at their first admission.
+
+        The function uses the patient records and lab records to
+        determine the age of a patient at their first admission.
+        Firstly, the patient's date of birth is accessed, O(2)
+        and parsed, O(1).
+
+        The patient's lab records are then saved, O(1).
+
+        An arbitrary admission date is then initialized, O(1).
+
+        A loop initiates to iterate through the patient's lab records.
+        This is O(K) (rows in the lab file). Within this loop, the
+        admission date is accessed and parsed, O(2).
+        Then a check occurs to see if the admission date is older
+        than the earliest admission date. This is O(1).
+        If the admission date is older, the earliest admission date
+        is updated, O(1). If the admission date is not older,
+        the loop continues after it hits the else statement O(1).
+
+        After exiting the loop, the age of the patient at their
+        first admission is calculated, O(1). This is then
+        returned, O(1).
+
+        We have a total time complexity of
+        O(2) + O(1) + O(1) + O(K x 5) = O(K x 5) + O(4).
+        This simplifies to O(K), as expected.
+        """
+        # today or now is initialized as
+        # the earliest possible admission date
+        earliest_admission = dt.datetime.now()  # O(1)
+
+        for lab in self.labs:  # O(K)
+            admission_date = lab.date  # O(2)
+            if admission_date < earliest_admission:  # O(1)
+                earliest_admission = admission_date  # O(1)
+
+        first_admission_age = earliest_admission.year - self.dob.year  # O(1)
+
+        return first_admission_age  # O(1)
+
+
 def date_parser(date: str) -> dt.datetime:
     """Convert string to datetime object.
 
@@ -77,7 +280,8 @@ def fix_header(header: str) -> list[str]:
 
 def patient_file_to_dict(
     txt_file: str,
-) -> dict[str, dict[str, str]]:
+    lab_dict: dict[str, list[Labs]],
+) -> dict[str, Patient]:
     """Open patient txt files to convert them to dictionaries.
 
     Assume that the first row is the header.
@@ -131,7 +335,7 @@ def patient_file_to_dict(
     This simplifies to O(N x M), where N is the number of rows and M
     is the number of columns of the patient file.
     """
-    output_dict: dict[str, dict[str, str]] = dict()  # O(1)
+    output_dict = dict()  # O(1)
 
     with open(txt_file, encoding="UTF-8-SIG") as f:  # O(1)
         # Core assumption: first line is header
@@ -141,21 +345,32 @@ def patient_file_to_dict(
         patient_id_index = header.index("PatientID")  # O(M)
 
         # remove patient_id from header
-        fixed_header.pop(patient_id_index)  # O(1)
 
         # This whole loop has a time complexity of O(NxM)
         for line in f:  # O(N x M)
             records = line.strip().split("\t")  # O(M)
-            patient_id = records.pop(patient_id_index)  # O(1)
 
-            output_dict[patient_id] = dict(zip(fixed_header, records))  # O(M)
+            mapping = dict(zip(fixed_header, records))  # O(M)
+
+            patient = Patient(
+                mapping["PatientID"],
+                mapping["PatientGender"],
+                date_parser(mapping["PatientDateOfBirth"]),
+                mapping["PatientRace"],
+                mapping["PatientMaritalStatus"],
+                mapping["PatientLanguage"],
+                mapping["PatientPopulationPercentageBelowPoverty"],
+                lab_dict[mapping["PatientID"]],
+            )  # O(1)
+
+            output_dict[records[patient_id_index]] = patient  # O(1)
 
     return output_dict  # O(1)
 
 
 def lab_file_to_dict(
     txt_file: str,
-) -> dict[str, list[dict[str, str]]]:
+) -> dict[str, list[Labs]]:
     """Open patient lab txt files to convert them to dictionaries.
 
     Assume that the first row is the header.
@@ -222,7 +437,7 @@ def lab_file_to_dict(
     + O(K)[3 * O(L) + O(1)] + O(1) (the return statement).
     This simplifies to O(K x L), the highest order term.
     """
-    output_dict: dict[str, list[dict[str, str]]] = dict()  # O(1)
+    output_dict = dict()  # O(1)
 
     with open(txt_file, encoding="UTF-8-SIG") as f:  # O(1)
         # Core assumption: first line is header
@@ -232,27 +447,34 @@ def lab_file_to_dict(
         patient_id_index = fixed_header.index("PatientID")  # O(L)
 
         # remove patient_id from header
-        fixed_header.pop(patient_id_index)  # O(1)
 
         # This whole loop has a time complexity of O(K x L)
         for line in f:  # O(K x L)
             labs = line.strip().split("\t")  # O(L)
-            patient_id = labs.pop(patient_id_index)  # O(1)
+            patient_id = labs[patient_id_index]  # O(1)
+
+            new_labs = dict(zip(fixed_header, labs))  # O(L)
+            lab_obj = Labs(
+                new_labs["PatientID"],
+                new_labs["AdmissionID"],
+                new_labs["LabName"],
+                float(new_labs["LabValue"]),
+                new_labs["LabUnits"],
+                date_parser(new_labs["LabDateTime"]),
+            )  # O(1)
 
             if patient_id not in output_dict:  # O(1)
-                new_labs = [dict(zip(fixed_header, labs))]  # O(L)
-                output_dict[patient_id] = new_labs  # O(1)
+                output_dict[patient_id] = [lab_obj]  # O(1)
 
-            else:
-                newer_labs = dict(zip(fixed_header, labs))  # O(L)
-                output_dict[patient_id].append(newer_labs)  # O(1)
+            else:  # O(1)
+                output_dict[patient_id].append(lab_obj)  # O(1)
 
     return output_dict  # O(1)
 
 
 def parse_data(
     patient_filename: str, lab_filename: str
-) -> tuple[dict[str, dict[str, str]], dict[str, list[dict[str, str]]]]:
+) -> tuple[dict[str, Patient], dict[str, list[Labs]]]:
     """Take patient and lab files and converts them into dictionaries.
 
     They are assumed to be tab-delimited text files,
@@ -268,198 +490,7 @@ def parse_data(
     Regardless, the highest complexity is :
     O(N x M) + O(K x L)
     """
-    patient_dict = patient_file_to_dict(patient_filename)  # O(N x M)
     lab_dict = lab_file_to_dict(lab_filename)  # O(K x L)
+    patient_dict = patient_file_to_dict(patient_filename, lab_dict)  # O(N x M)
 
     return patient_dict, lab_dict  # O(1)
-
-
-def patient_age(records: dict[str, dict[str, str]], patient_id: str) -> int:
-    """Return patient age from records.
-
-    Take dictionary of patient records and the patient id
-    as inputs to return the patient's age in year.
-
-    The helper functions below have already been described.
-    The time complexity for finding the date of birth is
-    O(1), due to the date corresponding to a dictionary key.
-    It is assumed that the name of that key is known.
-    The time complexity for parsing the date is O(1).
-    The time complexity for computing the age is O(1).
-    The return statement has a time complexity of O(1).
-
-    The overall time complexity is :
-
-    O(1) + + O(1) + O(1) + O(1) =  O(1)
-
-    This simplifies to an O(1) series of operations.
-    """
-    bday = records[patient_id]["PatientDateOfBirth"]  # O(1)
-    birth_date: dt.datetime = date_parser(bday)  # O(1)
-
-    age: int = dt.datetime.now().year - birth_date.year  # O(1)
-
-    return age  # O(1)
-
-
-def patient_is_sick(  # type: ignore[return]
-    records: dict[str, list[dict[str, str]]],
-    patient_id: str,
-    lab_name: str,
-    operator: str,
-    value: float,
-) -> bool:
-    """Return boolean based on threshold for test.
-
-    This is a function that determines if the patient is sick,
-    depending on the threshold values chosen for the patient,
-    for a specific lab test.
-    The lab records are a dictionary with a patient key mapped
-    to a list of dictionaries that represent lab tests.
-    The operators to compare against the thresholds are '>' and '<'.
-
-    The first step is to save the patient's lab records to a variable.
-    This is O(1). Three variables are initialized. The first is a flag
-    variable that is set to False, and it is meant to indicate if a
-    specific lab test exists for a patient. If False, that test does
-    not exist, and the function will return an error message (later on
-    in the function). The second variable is meant to hold a lab value,
-    and the last one will hold a lab date. For simplicity, the latter
-    two will be initialized to None and will be updated if the lab test
-    is found. This is O(1) + O(1) + O(1).
-
-    We have a complexity of O(1) + O(1) + O(1) + O(1) = O(1) up
-    to this point.
-
-    The next step is to iterate through the patient's lab records in order
-    to find the lab test that matches the lab_name. This is O(K).
-    Although K referred to the number of rows (tests) in the lab file,
-    it is also used to represent the number of lab tests for
-    a patient in this unique case. Part of the nuance of K is that we don't
-    know how many lab tests there are  in total, in addition to lab tests
-    per patient. We can have 10, 20, 30, 40 or maybe hundreds of labs
-    for a given patient.
-
-    Within this loop, two checks occur. The first ascertains that the lab
-    name has been found and that the flag is set to False. This is O(1).
-    This is equivalent to finding that lab file for the first time.
-    The flag is updated to True, the lab value is found and converted
-    to a float and used to update the lab_value variable. The lab date
-    is parsed and is used to update the lab_date variable.
-    This is O(1) + O(1) + O(1). This sums to O(1).
-
-    The second check assumes a new lab test has been found again, given
-    that the flag is currently set to True. This check is O(1).
-    The accessing and parsing of the new date is O(1).
-    The comparison of the new date to the old date is O(1).
-    If the new date is more recent, the lab value and date are updated
-    in an identical fashion. The updating of the lab value is O(1).
-    The updating of the lab date is O(1). This sums to
-    O(1) + O(1) + O(1) + O(1) + O(1) = O(1).
-
-    These checks all occur within the loop, so the time complexity
-    is O(K) + O(K) = 2 * O(K).
-
-    The function then proceeds to validate if no test was found.
-    this check is O(1). The function then returns an error message
-    if the test was not found. This is O(1).
-
-    The next checks are to verify which operators are being used.
-    One full check is performed for each of the two, < and >, and
-    a boolean is returned for each by comparing the lab value found
-    to the threshold value by using the designated operator.
-    The checking is O(1), and the comparison is O(1),
-    and the return is O(1).
-
-    Now, to calculate the final tally.
-    The initialization of the variables is O(1).
-    The loop is 2*O(K).
-    The checks for the potential lab not found is O(1).
-    The checks for the operators, as well as their comparisons and
-    return statements are 2 * O(1) = O(1).
-
-    This simplifies to an overall time complexity of O(K).
-    """
-    lab_records = records[patient_id]  # O(1)
-
-    is_lab_found = False  # O(1)
-    # arbitrary value to please mypy
-
-    lab_value = 0.0  # O(1)
-    # arbitrary date to please mypy
-    lab_date = dt.datetime(1, 1, 1)  # O(1)
-
-    for lab in lab_records:  # O(K)
-        if (lab["LabName"] == lab_name) and (is_lab_found is False):  # O(1)
-            is_lab_found = True  # O(1)
-            lab_value = float(lab["LabValue"])  # O(1)
-            lab_date = date_parser(lab["LabDateTime"])  # O(1)
-
-        elif (lab["LabName"] == lab_name) and (is_lab_found is True):  # O(1)
-            new_lab_date = date_parser(lab["LabDateTime"])  # O(1)
-            if new_lab_date > lab_date:  # O(1)
-                lab_value = float(lab["LabValue"])  # O(1)
-                lab_date = new_lab_date  # O(1)
-
-    if not is_lab_found:  # O(1)
-        raise ValueError(
-            "Lab not found. It may not exist, or you may have mistyped it"
-        )  # O(1)
-
-    elif operator == ">":  # O(1)
-        return lab_value > value  # O(1)
-
-    elif operator == "<":  # O(1)
-        return lab_value < value  # O(1)
-
-
-def age_at_first_admission(
-    patient_records: dict[str, dict[str, str]],
-    lab_records: dict[str, list[dict[str, str]]],
-    patient_id: str,
-) -> int:
-    """Return the age of a patient at their first admission.
-
-    The function uses the patient records and lab records to
-    determine the age of a patient at their first admission.
-    Firstly, the patient's date of birth is accessed, O(2)
-    and parsed, O(1).
-
-    The patient's lab records are then saved, O(1).
-
-    An arbitrary admission date is then initialized, O(1).
-
-    A loop initiates to iterate through the patient's lab records.
-    This is O(K) (rows in the lab file). Within this loop, the
-    admission date is accessed and parsed, O(2).
-    Then a check occurs to see if the admission date is older
-    than the earliest admission date. This is O(1).
-    If the admission date is older, the earliest admission date
-    is updated, O(1). If the admission date is not older,
-    the loop continues after it hits the else statement O(1).
-
-    After exiting the loop, the age of the patient at their
-    first admission is calculated, O(1). This is then
-    returned, O(1).
-
-    We have a total time complexity of
-    O(2) + O(1) + O(1) + O(K x 5) = O(K x 5) + O(4).
-    This simplifies to O(K), as expected.
-    """
-    dob = patient_records[patient_id]["PatientDateOfBirth"]  # O(2)
-    dob_formatted = date_parser(dob)  # O(1)
-
-    patient_lab_records = lab_records[patient_id]  # O(1)
-
-    # today or now is initialized as
-    # the earliest possible admission date
-    earliest_admission = dt.datetime.now()  # O(1)
-
-    for lab in patient_lab_records:  # O(K)
-        admission_date = date_parser(lab["LabDateTime"])  # O(2)
-        if admission_date < earliest_admission:  # O(1)
-            earliest_admission = admission_date  # O(1)
-
-    first_admission_age = earliest_admission.year - dob_formatted.year  # O(1)
-
-    return first_admission_age  # O(1)

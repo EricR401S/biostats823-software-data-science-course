@@ -1,5 +1,6 @@
 """Python file to parse patient's data and lab results."""
 import datetime as dt
+import sqlite3
 
 """
 The objective of the functions here is to parse patient's data and lab results.
@@ -22,25 +23,120 @@ These details will be considered in the time complexity analysis.
 """
 
 
-class Labs:
+def date_parser(date: str) -> dt.datetime:
+    """Convert string to datetime object.
+
+    Assumes it always has the format: YYYY-MM-DD hh:mm:ss.[mmm]
+
+    The function takes a string and executes a strip() method on it.
+    This method has a time complexity of O(1), because the length
+    of the date is assumed to be known and finite. The string
+    is not expected to scale in growth at all.
+
+    After this step is completed, the function will use the
+    datetime.strptime() method to convert the string to a datetime object.
+    This method has a time complexity of O(1), due to the fact that it
+    has to iterate through a finite string to
+    convert it to a datetime object.
+
+    In total, we have constant time operations,
+    so the overall complexity is category of O(1).
+    """
+    date = date.strip()  # O(1)
+
+    return dt.datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f")  # O(1)
+
+
+class Lab:
     """Class to represent lab results."""
 
     def __init__(
         self,
-        patient_id: str = "",
-        admission_id: str = "",
-        lab_name: str = "",
-        lab_value: float = 0.0,
-        lab_unit: str = "",
-        lab_date: dt.datetime = dt.datetime(1, 1, 1),
+        Autogen_id: int = 0,
+        db_name: str = "",
     ) -> None:
         """Initialize lab object."""
-        self.patient_id: str = patient_id
-        self.admission_id: str = admission_id
-        self.name: str = lab_name
-        self.value: float = lab_value
-        self.unit: str = lab_unit
-        self.date: dt.datetime = lab_date
+        self.Autogen_id: int = Autogen_id
+        self.db_name: str = db_name
+
+    @property
+    def patient_id(self) -> str:
+        """Return patient ID."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT PatientID FROM LABS WHERE Autogen_id = ?",
+            (self.Autogen_id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return str(data[0])
+
+    @property
+    def admission_id(self) -> int:
+        """Return admission ID."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT AdmissionID FROM LABS WHERE Autogen_id = ?",
+            (self.Autogen_id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return int(data[0])
+
+    @property
+    def name(self) -> str:
+        """Return lab name."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+        SELECT Name FROM LABS WHERE Autogen_id = ?""",
+            (self.Autogen_id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return str(data[0])
+
+    @property
+    def value(self) -> float:
+        """Return lab value."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT Value FROM LABS WHERE Autogen_id = ?", (self.Autogen_id,)
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return float(data[0])
+
+    @property
+    def unit(self) -> str:
+        """Return lab unit."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+        SELECT Unit FROM LABS WHERE Autogen_id = ?""",
+            (self.Autogen_id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return str(data[0])
+
+    @property
+    def date(self) -> dt.datetime:
+        """Return lab date."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            """SELECT Date FROM LABS WHERE Autogen_id = ?""",
+            (self.Autogen_id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return date_parser(data[0])
 
 
 class Patient:
@@ -49,23 +145,89 @@ class Patient:
     def __init__(
         self,
         patient_id: str = "",
-        patient_gender: str = "",
-        patient_dob: dt.datetime = dt.datetime.now(),
-        patient_race: str = "",
-        patient_marital_status: str = "",
-        patient_language: str = "",
-        patient_poverty_level: str = "",
-        patient_labs: list[Labs] = [],
+        db_name: str = "",
+        lab_results: list[Lab] = [],
     ) -> None:
         """Initialize patient object."""
-        self.patient_id: str = patient_id
-        self.gender: str = patient_gender
-        self.dob: dt.datetime = patient_dob
-        self.race: str = patient_race
-        self.marital_status: str = patient_marital_status
-        self.language: str = patient_language
-        self.poverty_level: str = patient_poverty_level
-        self.labs: list[Labs] = patient_labs
+        self.id = patient_id
+        self.db_name = db_name
+        self.labs = lab_results
+
+    @property
+    def gender(self) -> str:
+        """Return the gender of the patient."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute("SELECT Gender FROM PATIENTS WHERE ID = ?", (self.id,))
+        data = cursor.fetchone()
+        connection.close()
+        return str(data[0])
+
+    @property
+    def dob(self) -> dt.datetime:
+        """Return the date of birth of the patient."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+        SELECT DateOfBirth FROM PATIENTS WHERE ID = ?""",
+            (self.id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return date_parser(data[0])
+
+    @property
+    def race(self) -> str:
+        """Return the race of the patient."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute("SELECT Race FROM PATIENTS WHERE ID = ?", (self.id,))
+        data = cursor.fetchone()
+        connection.close()
+        return str(data[0])
+
+    @property
+    def marital_status(self) -> str:
+        """Return the marital status of the patient."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+        SELECT MaritalStatus FROM PATIENTS WHERE ID = ?""",
+            (self.id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return str(data[0])
+
+    @property
+    def language(self) -> str:
+        """Return the language of the patient."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+        SELECT Language FROM PATIENTS WHERE ID = ?""",
+            (self.id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return str(data[0])
+
+    @property
+    def poverty_level(self) -> str:
+        """Return the poverty level of the patient."""
+        connection = sqlite3.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+        SELECT PovertyLevel FROM PATIENTS WHERE ID = ?""",
+            (self.id,),
+        )
+        data = cursor.fetchone()
+        connection.close()
+        return str(data[0])
 
     @property
     def age(self) -> int:
@@ -225,30 +387,6 @@ class Patient:
         return first_admission_age  # O(1)
 
 
-def date_parser(date: str) -> dt.datetime:
-    """Convert string to datetime object.
-
-    Assumes it always has the format: YYYY-MM-DD hh:mm:ss.[mmm]
-
-    The function takes a string and executes a strip() method on it.
-    This method has a time complexity of O(1), because the length
-    of the date is assumed to be known and finite. The string
-    is not expected to scale in growth at all.
-
-    After this step is completed, the function will use the
-    datetime.strptime() method to convert the string to a datetime object.
-    This method has a time complexity of O(1), due to the fact that it
-    has to iterate through a finite string to
-    convert it to a datetime object.
-
-    In total, we have constant time operations,
-    so the overall complexity is category of O(1).
-    """
-    date = date.strip()  # O(1)
-
-    return dt.datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f")  # O(1)
-
-
 def fix_header(header: str) -> list[str]:
     """Split header into list of strings.
 
@@ -280,7 +418,9 @@ def fix_header(header: str) -> list[str]:
 
 def patient_file_to_dict(
     txt_file: str,
-    lab_dict: dict[str, list[Labs]],
+    lab_dict: dict[str, list[Lab]],
+    db: sqlite3.Connection,
+    name_db: str,
 ) -> dict[str, Patient]:
     """Open patient txt files to convert them to dictionaries.
 
@@ -335,6 +475,25 @@ def patient_file_to_dict(
     This simplifies to O(N x M), where N is the number of rows and M
     is the number of columns of the patient file.
     """
+    cursor = db.cursor()  # O(1)
+    cursor.execute("DROP TABLE IF EXISTS PATIENTS")  # O(1)
+
+    # create table
+    cursor.execute(
+        """
+        CREATE TABLE PATIENTS (
+            ID VARCHAR(255) PRIMARY KEY,
+            Gender VARCHAR(255),
+            DateOfBirth DATETIME,
+            Race VARCHAR(255),
+            MaritalStatus VARCHAR(255),
+            Language VARCHAR(255),
+            PovertyLevel FLOAT
+        )
+        """
+    )  # O(1)
+
+    db.commit()  # O(1)
     output_dict = dict()  # O(1)
 
     with open(txt_file, encoding="UTF-8-SIG") as f:  # O(1)
@@ -344,33 +503,48 @@ def patient_file_to_dict(
         fixed_header = fix_header(header)  # O(M)
         patient_id_index = header.index("PatientID")  # O(M)
 
-        # remove patient_id from header
-
+        # prepare queue
+        sql_queue = []  # O(1)
         # This whole loop has a time complexity of O(NxM)
         for line in f:  # O(N x M)
             records = line.strip().split("\t")  # O(M)
 
             mapping = dict(zip(fixed_header, records))  # O(M)
 
-            patient = Patient(
-                mapping["PatientID"],
-                mapping["PatientGender"],
-                date_parser(mapping["PatientDateOfBirth"]),
-                mapping["PatientRace"],
-                mapping["PatientMaritalStatus"],
-                mapping["PatientLanguage"],
-                mapping["PatientPopulationPercentageBelowPoverty"],
-                lab_dict[mapping["PatientID"]],
+            sql_queue.append(
+                (
+                    mapping["PatientID"],
+                    mapping["PatientGender"],
+                    date_parser(mapping["PatientDateOfBirth"]),
+                    mapping["PatientRace"],
+                    mapping["PatientMaritalStatus"],
+                    mapping["PatientLanguage"],
+                    float(mapping["PatientPopulationPercentageBelowPoverty"]),
+                )
             )  # O(1)
+            patient_id = mapping["PatientID"]  # O(1)
+            patient = Patient(patient_id, name_db, lab_dict[patient_id])  # O(1
 
             output_dict[records[patient_id_index]] = patient  # O(1)
+
+        cursor.executemany(
+            """
+            INSERT INTO PATIENTS
+            VALUES(?, ?, ?, ?, ?, ?, ?)
+            """,
+            sql_queue,
+        )
+
+        db.commit()  # O(1)
 
     return output_dict  # O(1)
 
 
 def lab_file_to_dict(
     txt_file: str,
-) -> dict[str, list[Labs]]:
+    db: sqlite3.Connection,
+    name_db: str,
+) -> dict[str, list[Lab]]:
     """Open patient lab txt files to convert them to dictionaries.
 
     Assume that the first row is the header.
@@ -437,8 +611,28 @@ def lab_file_to_dict(
     + O(K)[3 * O(L) + O(1)] + O(1) (the return statement).
     This simplifies to O(K x L), the highest order term.
     """
-    output_dict = dict()  # O(1)
+    cursor = db.cursor()  # O(1)
+    cursor.execute("DROP TABLE IF EXISTS LABS")  # O(1)
 
+    # create table
+    cursor.execute(
+        """
+        CREATE TABLE LABS (
+            PatientID VARCHAR(255),
+            AdmissionID INT,
+            Name VARCHAR(255),
+            Value FLOAT(8),
+            Unit VARCHAR(255),
+            Date DATETIME,
+            Autogen_id INT PRIMARY KEY
+        )
+        """
+    )  # O(1)
+
+    db.commit()  # O(1)
+
+    output_dict = dict()  # O(1)
+    generative_id = 1  # O(1)
     with open(txt_file, encoding="UTF-8-SIG") as f:  # O(1)
         # Core assumption: first line is header
         # skip and save header
@@ -447,21 +641,28 @@ def lab_file_to_dict(
         patient_id_index = fixed_header.index("PatientID")  # O(L)
 
         # remove patient_id from header
-
+        sql_queue = []  # O(1)
         # This whole loop has a time complexity of O(K x L)
         for line in f:  # O(K x L)
             labs = line.strip().split("\t")  # O(L)
             patient_id = labs[patient_id_index]  # O(1)
 
             new_labs = dict(zip(fixed_header, labs))  # O(L)
-            lab_obj = Labs(
-                new_labs["PatientID"],
-                new_labs["AdmissionID"],
-                new_labs["LabName"],
-                float(new_labs["LabValue"]),
-                new_labs["LabUnits"],
-                date_parser(new_labs["LabDateTime"]),
+
+            # the query to insert the data
+            sql_queue.append(
+                (
+                    new_labs["PatientID"],
+                    int(new_labs["AdmissionID"]),
+                    new_labs["LabName"],
+                    float(new_labs["LabValue"]),
+                    new_labs["LabUnits"],
+                    date_parser(new_labs["LabDateTime"]),
+                    generative_id,
+                )
             )  # O(1)
+
+            lab_obj = Lab(generative_id, name_db)  # O(1)
 
             if patient_id not in output_dict:  # O(1)
                 output_dict[patient_id] = [lab_obj]  # O(1)
@@ -469,12 +670,24 @@ def lab_file_to_dict(
             else:  # O(1)
                 output_dict[patient_id].append(lab_obj)  # O(1)
 
+            generative_id += 1  # O(1)
+
+        # insert the data
+        cursor.executemany(
+            """INSERT INTO LABS
+            VALUES(?, ?, ?, ?, ?, ?, ?)
+            """,
+            sql_queue,
+        )  # O(1)
+
+        db.commit()  # O(1)
+
     return output_dict  # O(1)
 
 
 def parse_data(
     patient_filename: str, lab_filename: str
-) -> tuple[dict[str, Patient], dict[str, list[Labs]]]:
+) -> tuple[dict[str, Patient], dict[str, list[Lab]]]:
     """Take patient and lab files and converts them into dictionaries.
 
     They are assumed to be tab-delimited text files,
@@ -490,7 +703,13 @@ def parse_data(
     Regardless, the highest complexity is :
     O(N x M) + O(K x L)
     """
-    lab_dict = lab_file_to_dict(lab_filename)  # O(K x L)
-    patient_dict = patient_file_to_dict(patient_filename, lab_dict)  # O(N x M)
+    # connected to database
+    connection = sqlite3.connect("EHR.db")  # O(1)
 
+    lab_dict = lab_file_to_dict(lab_filename, connection, "EHR.db")  # O(K x L)
+    patient_dict = patient_file_to_dict(
+        patient_filename, lab_dict, connection, "EHR.db"
+    )  # O(N x M)
+
+    connection.close()  # O(1)
     return patient_dict, lab_dict  # O(1)
